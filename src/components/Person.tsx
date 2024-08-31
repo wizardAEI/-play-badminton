@@ -1,8 +1,7 @@
 import Persons from "/persons.svg";
 
-export default function Person(props: { index: number, reverse?: boolean}) {
+export default function Person(props: { index: number}) {
   const index = props.index;
-  const reverse = props.reverse;
 
   // 假设每个小人的宽度和高度是 50px，且排列成一行
   const personWidth = 125; // 750 / 6
@@ -12,12 +11,11 @@ export default function Person(props: { index: number, reverse?: boolean}) {
   const x = (index % 6) * personWidth; // 6 列
   const y = Math.floor(index / 6) * personHeight; // 3 排
 
-  console.log(x, y);
-
   return (
     <div style={{
         width: personWidth,
         height: personHeight,
+        transform: 'scale(1.5, 1.5)',
     }}>
       <svg width={personWidth} height={personHeight}>
         <image
@@ -26,8 +24,7 @@ export default function Person(props: { index: number, reverse?: boolean}) {
           height="500"
           clipPath="url(#clip-person)"
           style={{
-            transform: `translate(${-x}px, ${-y}px) scale(${reverse ? -1 : 1}, 1)`,
-            transformOrigin: `${x + personWidth / 2}px ${y + personHeight / 2}px`
+            transform: `translate(${-x}px, ${-y}px)`,
           }}
         />
       </svg>

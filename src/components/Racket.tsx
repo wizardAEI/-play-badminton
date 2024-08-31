@@ -1,14 +1,10 @@
-export default function Racket(props: { reverse?: boolean }) {
+export default function Racket() {
   return (
     <svg
       viewBox="0 0 200 300"
       xmlns="http://www.w3.org/2000/svg"
       height="150"
       width="120"
-      style={{
-        transform: props.reverse ? "scale(-1, 1)" : "scale(1, 1)", // 翻转
-        transformOrigin: "center", // 设置变换的原点为中心
-      }}
     >
       <g
         transform="matrix(1.219132, 0, 0, 1.172024, -2.107423, -0.94856)"
