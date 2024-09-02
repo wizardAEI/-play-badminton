@@ -20,14 +20,14 @@ export default function Race() {
         if (person1.x <= 5) return;
         setPerson1((prevPerson1) => ({
           ...prevPerson1,
-          x: prevPerson1.x - 2,
+          x: prevPerson1.x - 3,
         }));
       }
       if (event.key === "d") {
         if (person1.x >= 45) return;
         setPerson1((prevPerson1) => ({
           ...prevPerson1,
-          x: prevPerson1.x + 2,
+          x: prevPerson1.x + 3,
         }));
       }
     };
@@ -40,14 +40,14 @@ export default function Race() {
         if (person2.x <= 55) return;
         setPerson2((prevPerson2) => ({
           ...prevPerson2,
-          x: prevPerson2.x - 2,
+          x: prevPerson2.x - 3,
         }));
       }
       if (event.key === "ArrowRight") {
         if (person2.x >= 95) return;
         setPerson2((prevPerson2) => ({
           ...prevPerson2,
-          x: prevPerson2.x + 2,
+          x: prevPerson2.x + 3,
         }));
       }
     };
@@ -62,12 +62,13 @@ export default function Race() {
   const [countDown, setCountDown] = useState(3);
   const [begin, setBegin] = useState(false);
   const [badMintonPosition, setBadMintonPosition] = useState({
+    initialX: 10,
+    initialY: 10,
     x: 10,
     y: 10,
+    time: 0,
     isMoving: false,
     direction: 1,
-    velocity: 2, // 初始速度
-    gravity: 0.1, // 重力加速度
   });
   useEffect(() => {
     const timer = setInterval(() => {
@@ -76,7 +77,7 @@ export default function Race() {
           clearInterval(timer);
           setBegin(true);
           setBadMintonPosition({
-           ...badMintonPosition,
+            ...badMintonPosition,
             isMoving: true,
           });
           return 0; // 防止负数
@@ -87,34 +88,92 @@ export default function Race() {
     // 清理定时器
     return () => clearInterval(timer);
   }, []);
+  function calculatePosition(
+    initialX: number,
+    initialY: number,
+    v0: number,
+    n: number,
+    direction: number
+  ) {
+    const g = 9.81; // 重力加速度 (m/s^2)
+    const angle = 45; // 抛出角度 (度)
 
- 
+    // 将角度转换为弧度
+    const angleRad = angle * (Math.PI / 180);
 
-    // 动画逻辑
-    useEffect(() => {
-      const animate = () => {
-        setBadMintonPosition((prev) => {
-          if (!prev.isMoving) return prev;
-  
-          const newX = prev.x + prev.velocity * Math.cos(Math.PI / 4); // 45度角
-          const newY = prev.y + prev.velocity * Math.sin(Math.PI / 4) - prev.gravity; // 重力影响
-  
-          // 更新羽毛球的位置
-          return {
-            ...prev,
-            x: newX,
-            y: newY,
-            velocity: prev.velocity - prev.gravity, // 速度随重力减小
-          };
-        });
-  
-        requestAnimationFrame(animate);
-      };
-  
-      if (badMintonPosition.isMoving) {
-        requestAnimationFrame(animate);
-      }
-    }, [badMintonPosition]);
+    // 计算 x 和 y 的位置
+    const deltaX = v0 * Math.cos(angleRad) * n * direction;
+    const deltaY = v0 * Math.sin(angleRad) * n - 0.5 * g * Math.pow(n, 2);
+
+    // 新的位置
+    const x = initialX + deltaX * 0.02;
+    const y = initialY + deltaY * 0.02;
+
+    return { x: x, y: y };
+  }
+
+  const initialVelocity = 0.2; // m/s
+  // 动画逻辑
+  useEffect(() => {
+    const animate = () => {
+      setBadMintonPosition((prev) => {
+        if (prev.y <= 0) return prev;
+        const position = calculatePosition(
+          prev.initialX,
+          prev.initialY,
+          initialVelocity,
+          prev.time,
+          prev.direction,
+        );
+        // 更新羽毛球的位置
+        return {
+          ...prev,
+          x: position.x,
+          y: position.y,
+          time: prev.time + 0.01,
+          // velocity: prev.velocity - prev.gravity, // 速度随重力减小
+        };
+      });
+      requestAnimationFrame(animate);
+    };
+    if (badMintonPosition.isMoving) {
+      requestAnimationFrame(animate);
+    }
+  }, [badMintonPosition]);
+
+  // // 碰撞逻辑
+  useEffect(() => {
+    const x = ((badMintonPosition.x - 10) * 40000 + 10) / 1200 * 100
+    const y = (badMintonPosition.y * 20) / 10
+    console.log ('>>>', x, y, person2.x)
+    if ((person1.x > x - 7) && (person1.x < x + 7) ) {
+      if (badMintonPosition.direction === 1) return
+      setBadMintonPosition((prev) => ({
+       ...prev,
+        direction: 1,
+        time: 0,
+      }));
+    }
+    if ((person2.x > x - 7) && (person2.x < x + 7) ) {
+      if (badMintonPosition.direction === -1) return
+      setBadMintonPosition((prev) => ({
+        ...prev,
+        direction: -1,
+        time: 0,
+      }));
+    }
+  }, [person1, person2, badMintonPosition])
+
+
+  function getX(x: number) {
+    let next = 0
+    if(x < 10) {
+      next =  ((9.973 - x) * 40000) - 1200
+    } else {
+      next = (x - 10) * 40000 + 10
+    }
+    return next
+  }
 
   return (
     <div
@@ -152,14 +211,14 @@ export default function Race() {
           left: `calc(${person2.x}% - 80px)`,
         }}
       >
-        <PersonWithBadminton index={9} reverse />
+        <PersonWithBadminton index={12} reverse />
       </div>
       <div
         style={{
           position: "absolute",
-          bottom: `${badMintonPosition.y}%`,
-          left: `calc(${badMintonPosition.x}% - 15px)`,
-          transform: `rotate(${badMintonPosition.direction * 90}deg)`,
+          bottom: `${badMintonPosition.y * 20}px`,
+          left: `calc(${getX(badMintonPosition.x)}px + 10px)`,
+          transform: `rotate(${-badMintonPosition.direction * 90}deg)`,
         }}
       >
         <BadMinton width={30} height={30} fill="red" />
